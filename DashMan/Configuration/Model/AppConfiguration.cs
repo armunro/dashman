@@ -6,5 +6,6 @@ namespace DashMan.Configuration.Model
         public string UserDataPath { get; set; } = "cef_userdata";
         public bool PersistUserPreferences { get; set; } = true;
         public bool PersistSessionCookies { get; set; } = true;
+        public bool HideCursor { get; set; } = true;
     }
 }

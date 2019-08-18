@@ -8,9 +8,6 @@ namespace DashMan.Configuration.Model
         public int ScreenNumber { get; set; }
         public bool Topmost { get; set; }
         public string BackgroundColor { get; set; }
-        public string BackgroundImage { get; set; }
-        public bool HideCursor { get; set; }
-        public string Title { get; set; }
         public int Height { get; set; }
         public int Width { get; set; }
         public int Top { get; set; }

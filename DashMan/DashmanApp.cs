@@ -29,9 +29,10 @@ namespace DashMan
                 ConfigurationProvider.RestoreDefaults(_configFilePath);
             var configuration = ConfigurationProvider.GetConfiguration(_configFilePath);
 
+         
             Cef.EnableHighDPISupport();
             InitializeCef(configuration.App);
-            
+
 
             foreach (WindowConfiguration windowConfig in configuration.Windows)
             {
@@ -43,7 +44,9 @@ namespace DashMan
                     FormBorderStyle = FormBorderStyle.None,
                     TopMost = windowConfig.Topmost,
                     StartPosition = FormStartPosition.Manual,
+                    BackColor =  ColorTranslator.FromHtml(windowConfig.BackgroundColor)
                 };
+               
                 foreach (BrowserConfiguration browserConfig in windowConfig.Browsers)
                 {
                     var browser = new ChromiumWebBrowser(browserConfig.Url)
@@ -59,9 +62,10 @@ namespace DashMan
                     browser.IsBrowserInitializedChanged += OnChromiumBrowserOnIsBrowserInitializedChanged;
                     window.Controls.Add(browser);
                 }
+            
+
                 var thread = new Thread(Start);
                 thread.Start(window);
-                
             }
 
             FileSystemWatcher assetWatcher = new FileSystemWatcher(@"..\assets");
@@ -72,10 +76,12 @@ namespace DashMan
         private void Start(object obj)
         {
             Form sender = (Form) obj;
+            Cursor.Hide();
+            sender.Closed += (o, args) => Application.Exit();
+
             Application.Run(sender);
         }
 
-     
 
         private static void OnChromiumBrowserOnIsBrowserInitializedChanged(object sender,
             EventArgs args)
@@ -121,7 +127,6 @@ namespace DashMan
 
             var settings = new CefSettings
             {
-             
                 PersistSessionCookies = appConfiguration.PersistSessionCookies,
                 PersistUserPreferences = appConfiguration.PersistUserPreferences,
                 CachePath = appConfiguration.CachePath,
