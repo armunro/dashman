@@ -1,5 +1,7 @@
 using System;
+using System.Drawing;
 using System.IO;
+using System.Threading;
 using System.Windows.Forms;
 using CefSharp;
 using CefSharp.SchemeHandler;
@@ -11,13 +13,14 @@ using DashMan.MessageBus;
 
 namespace DashMan
 {
-    public class DashmanApp
+    public class DashmanApp : ApplicationContext
     {
         private readonly string _configFilePath;
 
         public DashmanApp(string configFilePath)
         {
             _configFilePath = configFilePath;
+            ConstructFromConfiguration();
         }
 
         public void ConstructFromConfiguration()
@@ -26,40 +29,53 @@ namespace DashMan
                 ConfigurationProvider.RestoreDefaults(_configFilePath);
             var configuration = ConfigurationProvider.GetConfiguration(_configFilePath);
 
+            Cef.EnableHighDPISupport();
             InitializeCef(configuration.App);
+            
 
             foreach (WindowConfiguration windowConfig in configuration.Windows)
             {
                 Form window = new Form
                 {
-                    Text = windowConfig.Title,
                     Height = windowConfig.Height,
                     Width = windowConfig.Width,
-                    FormBorderStyle = FormBorderStyle.None
+                    DesktopLocation = new Point(windowConfig.Left, windowConfig.Top),
+                    FormBorderStyle = FormBorderStyle.None,
+                    TopMost = windowConfig.Topmost,
+                    StartPosition = FormStartPosition.Manual,
                 };
                 foreach (BrowserConfiguration browserConfig in windowConfig.Browsers)
                 {
                     var browser = new ChromiumWebBrowser(browserConfig.Url)
                     {
-                        Height = browserConfig.Height,
-                        Width = browserConfig.Width,
-                        Top =  browserConfig.Top,
-                        Left = browserConfig.Left,
+                        AutoSize = false,
+                        Size = new Size(browserConfig.Width, browserConfig.Height),
+                        Location = new Point(browserConfig.Left, browserConfig.Top),
                         Tag = new BrowserInfoTag(browserConfig),
-                        JsDialogHandler = new SuppressAlertsJsDialogHandler()
+                        Dock = DockStyle.None,
+                        JsDialogHandler = new SuppressAlertsJsDialogHandler(),
+                        FocusHandler = null
                     };
                     browser.IsBrowserInitializedChanged += OnChromiumBrowserOnIsBrowserInitializedChanged;
-
                     window.Controls.Add(browser);
                 }
-
-                window.Show();
+                var thread = new Thread(Start);
+                thread.Start(window);
+                
             }
-            
+
             FileSystemWatcher assetWatcher = new FileSystemWatcher(@"..\assets");
             assetWatcher.Changed += (sender, args) => UpdateMessageBus.SendMessage();
             assetWatcher.EnableRaisingEvents = true;
         }
+
+        private void Start(object obj)
+        {
+            Form sender = (Form) obj;
+            Application.Run(sender);
+        }
+
+     
 
         private static void OnChromiumBrowserOnIsBrowserInitializedChanged(object sender,
             EventArgs args)
@@ -67,7 +83,6 @@ namespace DashMan
             var chromiumBrowser = (ChromiumWebBrowser) sender;
             var infoTag = (BrowserInfoTag) chromiumBrowser.Tag;
 
-            chromiumBrowser.Load(infoTag.Configuration.Url);
             if (infoTag.Configuration.ShowDevTools)
                 chromiumBrowser.ShowDevTools();
             RegisterCustomAssets(chromiumBrowser, infoTag);
@@ -106,6 +121,7 @@ namespace DashMan
 
             var settings = new CefSettings
             {
+             
                 PersistSessionCookies = appConfiguration.PersistSessionCookies,
                 PersistUserPreferences = appConfiguration.PersistUserPreferences,
                 CachePath = appConfiguration.CachePath,
