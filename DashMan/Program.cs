@@ -10,8 +10,9 @@ namespace DashMan
         static void Main(string[] args)
         {
             Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);    
+            Application.SetCompatibleTextRenderingDefault(false);
             DashmanApp app = new DashmanApp(args.First());
+            app.ConstructFromConfiguration();
             Application.Run(app);
         }
     }

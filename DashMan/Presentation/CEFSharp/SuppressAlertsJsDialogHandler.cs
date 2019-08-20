@@ -1,6 +1,6 @@
 using CefSharp;
 
-namespace DashMan.Controls.ChromiumWebBrowser
+namespace DashMan.Presentation.CEFSharp
 {
     public class SuppressAlertsJsDialogHandler : IJsDialogHandler
     {
